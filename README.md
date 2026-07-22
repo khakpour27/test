@@ -15,8 +15,9 @@ Open **`index.html`** — hosted on GitHub Pages it becomes a live map you can u
 
 - The full route drawn along the canal
 - All 15 points of interest as tappable markers (locks, museums, parks, villages)
-- A **live GPS "blue dot"** — tap the ⊚ button to show your position; tap again for **follow mode**
-- A readout of the nearest point of interest and how far away it is
+- A **live GPS "blue dot"** with **follow mode** (starts automatically; tap ⊚ to recenter)
+- **Turn-by-turn navigation**: a nav card shows the next maneuver (turn/bear left-right) and the
+  distance to it, plus live **km remaining, ETA, and the next stop** — with an off-route warning
 - A **↓ GPX** button and per-point "Directions to here" links
 
 The site lives in **`docs/`**. To publish it: go to **Settings → Pages**, set

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Ciclovia del Navile" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Ciclovia del Navile</name>
+    <desc>Bologna (Porta Galliera) to Malalbergo along the Navile canal, ~30 km, mostly flat, mixed surface.</desc>
+  </metadata>
+  <wpt lat="44.5045" lon="11.3478">
+    <name>Porta Galliera (start)</name>
+    <desc>Start of the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.509" lon="11.3388">
+    <name>Sostegno della Bova</name>
+    <desc>Historic canal lock just outside Porta Lame, where the Navile canal was born (1221).</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.516" lon="11.346">
+    <name>Parco di Villa Angeletti</name>
+    <desc>Large green park along the right bank of the canal - a good first rest stop.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.523" lon="11.3432">
+    <name>Sostegno del Battiferro</name>
+    <desc>The best-preserved lock on the whole canal.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.5242" lon="11.3437">
+    <name>Museo del Patrimonio Industriale</name>
+    <desc>Industrial Heritage Museum, via della Beverara 123. Bologna&#x27;s economy from the Modern age onward.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.53" lon="11.347">
+    <name>Sostegno del Torreggiani</name>
+    <desc>One of the 15th-16th century canal locks along the urban stretch.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.536" lon="11.35">
+    <name>Sostegno del Landi</name>
+    <desc>15th-16th century canal lock.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.542" lon="11.353">
+    <name>Sostegno del Grassi (Vignola)</name>
+    <desc>Lock rebuilt by the architect Vignola.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.5488" lon="11.3552">
+    <name>Ponte della Bionda / Corticella</name>
+    <desc>Cross the Ponte della Bionda to reach Corticella, site of Bologna&#x27;s first river port.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.5512" lon="11.3585">
+    <name>Ponte di Corticella</name>
+    <desc>Bridge documented since the 13th century, dating to 1289.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.576" lon="11.3625">
+    <name>Castel Maggiore</name>
+    <desc>End of the urban stretch; the landscape opens into farmland.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.6265" lon="11.348">
+    <name>San Marino di Bentivoglio - Villa Smeraldi</name>
+    <desc>Museo della Civilta Contadina (Museum of Rural Life) inside the majestic Villa Smeraldi.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.636" lon="11.352">
+    <name>Bentivoglio</name>
+    <desc>Village on the plain; small detours reach museums and nature areas.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.648" lon="11.372">
+    <name>Oasi La Rizza</name>
+    <desc>Protected natural area, ideal for birdwatching.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <wpt lat="44.7157" lon="11.5343">
+    <name>Malalbergo (end)</name>
+    <desc>End of the route on the plain, along natural paths and short road sections - ride with care.</desc>
+    <sym>Waypoint</sym>
+  </wpt>
+  <trk>
+    <name>Ciclovia del Navile</name>
+    <trkseg>
+      <trkpt lat="44.5045" lon="11.3478"></trkpt>
+      <trkpt lat="44.5062" lon="11.347"></trkpt>
+      <trkpt lat="44.508" lon="11.343"></trkpt>
+      <trkpt lat="44.509" lon="11.3388"></trkpt>
+      <trkpt lat="44.5105" lon="11.3388"></trkpt>
+      <trkpt lat="44.513" lon="11.342"></trkpt>
+      <trkpt lat="44.516" lon="11.346"></trkpt>
+      <trkpt lat="44.5195" lon="11.345"></trkpt>
+      <trkpt lat="44.523" lon="11.3432"></trkpt>
+      <trkpt lat="44.5242" lon="11.3437"></trkpt>
+      <trkpt lat="44.5275" lon="11.3452"></trkpt>
+      <trkpt lat="44.53" lon="11.347"></trkpt>
+      <trkpt lat="44.5335" lon="11.3488"></trkpt>
+      <trkpt lat="44.536" lon="11.35"></trkpt>
+      <trkpt lat="44.54" lon="11.352"></trkpt>
+      <trkpt lat="44.542" lon="11.353"></trkpt>
+      <trkpt lat="44.546" lon="11.3545"></trkpt>
+      <trkpt lat="44.5488" lon="11.3552"></trkpt>
+      <trkpt lat="44.5512" lon="11.3585"></trkpt>
+      <trkpt lat="44.556" lon="11.36"></trkpt>
+      <trkpt lat="44.562" lon="11.3615"></trkpt>
+      <trkpt lat="44.569" lon="11.362"></trkpt>
+      <trkpt lat="44.576" lon="11.3625"></trkpt>
+      <trkpt lat="44.582" lon="11.36"></trkpt>
+      <trkpt lat="44.59" lon="11.356"></trkpt>
+      <trkpt lat="44.598" lon="11.352"></trkpt>
+      <trkpt lat="44.606" lon="11.35"></trkpt>
+      <trkpt lat="44.614" lon="11.349"></trkpt>
+      <trkpt lat="44.621" lon="11.3485"></trkpt>
+      <trkpt lat="44.6265" lon="11.348"></trkpt>
+      <trkpt lat="44.632" lon="11.35"></trkpt>
+      <trkpt lat="44.636" lon="11.352"></trkpt>
+      <trkpt lat="44.641" lon="11.36"></trkpt>
+      <trkpt lat="44.648" lon="11.372"></trkpt>
+      <trkpt lat="44.656" lon="11.39"></trkpt>
+      <trkpt lat="44.665" lon="11.415"></trkpt>
+      <trkpt lat="44.678" lon="11.445"></trkpt>
+      <trkpt lat="44.69" lon="11.48"></trkpt>
+      <trkpt lat="44.7" lon="11.505"></trkpt>
+      <trkpt lat="44.708" lon="11.522"></trkpt>
+      <trkpt lat="44.7157" lon="11.5343"></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

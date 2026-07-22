@@ -26,7 +26,7 @@
   .bar button.gpx { color:#fff; background:rgba(255,255,255,.18); border:none;
     padding:7px 11px; border-radius:8px; font-size:12px; white-space:nowrap; cursor:pointer; font-family:inherit; }
   .fab {
-    position:absolute; z-index:1000; right:14px; bottom:26px;
+    position:absolute; z-index:1002; right:14px; bottom:26px;
     width:56px; height:56px; border-radius:50%; border:none;
     background:var(--accent); color:#fff; font-size:24px;
     box-shadow:0 2px 10px rgba(0,0,0,.35); cursor:pointer;
@@ -72,11 +72,22 @@
   #nav .instr { font-size:14px; font-weight:600; line-height:1.2; }
   #nav .dist { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
   #nav .sub { font-size:11.5px; opacity:.92; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #elev { position:absolute; z-index:1001; left:10px; right:10px; bottom:calc(14px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.96); border-radius:14px; padding:8px 12px 10px;
+    box-shadow:0 3px 14px rgba(0,0,0,.28); display:none; }
+  #elev.show { display:block; }
+  .elevhead { display:flex; align-items:center; gap:8px; font-size:12px; color:#333; }
+  .elevhead b { color:var(--accent); }
+  .elevhead span { flex:1; color:#666; font-size:11.5px; font-variant-numeric:tabular-nums; }
+  .elevhead button { border:none; background:#eee; width:24px; height:24px; border-radius:50%; font-size:16px; cursor:pointer; color:#333; }
+  #elevChart { margin-top:6px; font-size:12px; color:#888; }
+  #elevChart svg { display:block; width:100%; height:88px; }
 </style>
 </head>
 <body>
 <div class="bar">
   <h1>Ciclovia del Navile<small>Casalecchio di Reno &rarr; Bologna &rarr; Malalbergo</small></h1>
+  <button class="gpx" id="elevBtn" title="Elevation profile">&#9968;</button>
   <button class="gpx" id="gpx">&#8681; GPX</button>
 </div>
 <div id="map"></div>
@@ -89,6 +100,10 @@
   </div>
 </div>
 <div id="banner"></div>
+<div id="elev">
+  <div class="elevhead"><b>Elevation</b><span id="elevStats"></span><button id="elevClose" aria-label="Close">&times;</button></div>
+  <div id="elevChart">Loading…</div>
+</div>
 <div id="status"></div>
 <button class="fab mini" id="voice" title="Voice guidance">&#128264;</button>
 <button class="fab" id="locate" title="Start / follow my location">&#9678;</button>
@@ -228,7 +243,45 @@
   }
   function applyRoute(coords){ routeCoords=coords; line.setLatLngs(coords);
     line.setStyle({ opacity:.9, dashArray:null, weight:5 }); map.fitBounds(line.getBounds(),{padding:[36,36]});
-    computeMeta(); updateStops(); }
+    computeMeta(); updateStops(); buildElevation(coords); }
+
+  // ---- Elevation profile (Open-Meteo, sampled along the route) ----
+  var elevData=null;
+  function buildElevation(coords){
+    if(!coords || coords.length<2) return;
+    var pts=downsample(coords,100), xs=[0];
+    for(var i=1;i<pts.length;i++) xs.push(xs[i-1]+distM(pts[i-1],pts[i]));
+    var lat=pts.map(function(p){ return p[0].toFixed(5); }).join(',');
+    var lon=pts.map(function(p){ return p[1].toFixed(5); }).join(',');
+    fetch('https://api.open-meteo.com/v1/elevation?latitude='+lat+'&longitude='+lon)
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ if(!j||!j.elevation||!j.elevation.length) return;
+        elevData={ xs:xs, ele:j.elevation, totalX:xs[xs.length-1]||1 };
+        if(document.getElementById('elev').classList.contains('show')) renderElev(); })
+      .catch(function(){});
+  }
+  function renderElev(){
+    var box=document.getElementById('elevChart'), stats=document.getElementById('elevStats');
+    if(!elevData){ box.textContent='Elevation data unavailable on this network.'; stats.textContent=''; return; }
+    var e=elevData.ele, xs=elevData.xs, tot=elevData.totalX;
+    var mn=Math.min.apply(null,e), mx=Math.max.apply(null,e), rng=Math.max(1,mx-mn), W=1000,H=100,pad=6;
+    var asc=0,desc=0; for(var i=1;i<e.length;i++){ var d=e[i]-e[i-1]; if(d>0)asc+=d; else desc-=d; }
+    function X(i){ return pad+(xs[i]/tot)*(W-2*pad); }
+    function Y(v){ return H-pad-((v-mn)/rng)*(H-2*pad); }
+    var path='M '+X(0).toFixed(1)+' '+Y(e[0]).toFixed(1);
+    for(var k=1;k<e.length;k++) path+=' L '+X(k).toFixed(1)+' '+Y(e[k]).toFixed(1);
+    var area=path+' L '+X(e.length-1).toFixed(1)+' '+(H-pad)+' L '+X(0).toFixed(1)+' '+(H-pad)+' Z';
+    box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+      '<path d="'+area+'" fill="rgba(11,114,133,.18)"/>'+
+      '<path d="'+path+'" fill="none" stroke="#0b7285" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>';
+    stats.textContent='↑ '+Math.round(asc)+' m  ↓ '+Math.round(desc)+' m  ·  '+Math.round(mn)+'–'+Math.round(mx)+' m  ·  '+(tot/1000).toFixed(1)+' km';
+  }
+  document.getElementById('elevBtn').addEventListener('click', function(){
+    var el=document.getElementById('elev'), show=!el.classList.contains('show');
+    el.classList.toggle('show',show);
+    if(show){ if(!elevData){ document.getElementById('elevChart').textContent='Loading…'; buildElevation(routeCoords); } else renderElev(); }
+  });
+  document.getElementById('elevClose').addEventListener('click', function(){ document.getElementById('elev').classList.remove('show'); });
 
   // ---- OSRM cycling router (returns turn steps WITH street names) ----
   function osrmRoute(vias){
@@ -356,7 +409,15 @@
   var navIcon=document.getElementById('navIcon'), navInstr=document.getElementById('navInstr'),
       navDist=document.getElementById('navDist'), navSub=document.getElementById('navSub');
   var meIcon=L.divIcon({ className:'', html:'<div class="me-dot"></div>', iconSize:[18,18] });
-  var SPEED_KMH=15;
+  var SPEED_KMH=15, nextTurnDist=null;
+
+  // ---- Keep the screen awake while navigating ----
+  var wakeLock=null;
+  async function acquireWake(){ try{ if('wakeLock' in navigator && document.visibilityState==='visible'){ wakeLock=await navigator.wakeLock.request('screen'); } }catch(e){} }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible' && watchId!==null) acquireWake(); });
+
+  // ---- Zoom tighter as a turn approaches ----
+  function navZoom(){ var d=nextTurnDist; if(d==null) return 16; return d<90?18:d<250?17:d<600?16:15; }
 
   // ---- Voice guidance (Web Speech) ----
   var voiceOn=false, preSpoken, finSpoken;
@@ -377,6 +438,7 @@
     var v=nearestVertex(pos), travelled=cum[v.i], remaining=Math.max(0, totalLen-travelled);
     nav.classList.add('show'); setControlsTop(118);
     if(v.d>70){ // off the route
+      nextTurnDist=null;
       nav.classList.add('off'); navIcon.innerHTML='&#9888;';
       navDist.textContent=fmt(v.d); navInstr.textContent='Off route — head back to the path';
       navSub.textContent=fmt(remaining)+' to go along the route'; return;
@@ -384,7 +446,7 @@
     nav.classList.remove('off');
     var nm=null, nmIdx=-1; for(var i=0;i<maneuvers.length;i++){ if(maneuvers[i].dist>travelled+8){ nm=maneuvers[i]; nmIdx=i; break; } }
     if(!nm){ nm=maneuvers[maneuvers.length-1]; nmIdx=maneuvers.length-1; }
-    var dNext=Math.max(0, nm.dist-travelled);
+    var dNext=Math.max(0, nm.dist-travelled); nextTurnDist=dNext;
     navIcon.innerHTML=nm.icon; navDist.textContent=fmt(dNext); navInstr.innerHTML=nm.text;
     var ns=null; for(var s=0;s<stopProj.length;s++){ if(stopProj[s].cum>travelled+40){ ns=stopProj[s]; break; } }
     var eta=Math.round(remaining/1000/SPEED_KMH*60);
@@ -399,13 +461,14 @@
     if(!meDot){ meDot=L.marker(ll,{icon:meIcon,zIndexOffset:1000}).addTo(map);
       meAcc=L.circle(ll,{radius:e.coords.accuracy,color:'#1c7ed6',weight:1,fillOpacity:.08}).addTo(map); }
     else { meDot.setLatLng(ll); meAcc.setLatLng(ll).setRadius(e.coords.accuracy); }
-    if(following) map.setView(ll, Math.max(map.getZoom(),16), {animate:true});
     updateNav(ll, e.coords.accuracy);
+    if(following) map.setView(ll, navZoom(), {animate:true});
   }
   function onErr(err){ nav.classList.add('show'); setControlsTop(118); navIcon.innerHTML='&#9888;';
     navDist.textContent='GPS'; navInstr.textContent='Location unavailable'; navSub.textContent=err.message; }
   function startWatch(){ if(!('geolocation' in navigator)){ onErr({message:'Geolocation not supported on this device.'}); return; }
-    if(watchId===null) watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:2000,timeout:20000}); }
+    if(watchId===null) watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:2000,timeout:20000});
+    acquireWake(); }
 
   locateBtn.addEventListener('click', function(){
     startWatch(); following=!following; locateBtn.classList.toggle('follow',following);

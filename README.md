@@ -20,6 +20,8 @@ Open **`index.html`** — hosted on GitHub Pages it becomes a live map you can u
   e.g. *"Turn left onto Via della Beverara"*): a nav card shows the next maneuver and the distance
   to it, plus live **km remaining, ETA, and the next stop** — with an off-route warning
 - **Voice guidance** — tap the 🔈 button to hear each turn announced (~150 m ahead and at the turn)
+- **Auto-zoom** that tightens as you approach a turn, **keep-screen-awake** while navigating, and an
+  **elevation profile** (⛰ button) with total ascent/descent, fetched in-browser from Open-Meteo
 - A **↓ GPX** button and per-point "Directions to here" links
 
 The site lives in **`docs/`**. To publish it: go to **Settings → Pages**, set

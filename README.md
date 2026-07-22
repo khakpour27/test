@@ -1,8 +1,12 @@
 # Ciclovia del Navile — bike navigation
 
 A GPS-ready version of the [Ciclovia del Navile](https://www.bolognawelcome.com/it/blog/percorso-ciclabile-lungo-il-canale-navile)
-cycle route: **Bologna (Porta Galliera) → Malalbergo**, following the historic Navile canal.
-~30 km, mostly flat, mixed surface (paved + gravel — MTB, gravel or a sturdy city bike).
+cycle route, door to door: **Casalecchio di Reno (Via Don Filippo Ercolani) → Bologna → Malalbergo**,
+following the historic Navile canal. Mostly flat, mixed surface (paved + gravel — MTB, gravel or a
+sturdy city bike). Starting from Casalecchio adds the crossing of Bologna before the canal proper.
+
+Along the way the map shows **attraction pins** (★) for stops worth a short detour — the Chiusa di
+Casalecchio, Parco della Montagnola, the Castello di Bentivoglio and more — each with a pop-up.
 
 ## Two ways to use it
 

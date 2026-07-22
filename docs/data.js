@@ -1,10 +1,17 @@
 window.NAVILE = {
+  "start": {
+    "name": "Start · Via Don Filippo Ercolani",
+    "query": "Via Don Filippo Ercolani, Casalecchio di Reno, Italy",
+    "lat": 44.4775,
+    "lon": 11.286,
+    "desc": "Ride start in Casalecchio di Reno. From here the route crosses to Bologna and picks up the Navile canal."
+  },
   "pois": [
     {
-      "name": "Porta Galliera (start)",
+      "name": "Porta Galliera",
       "lat": 44.5045,
       "lon": 11.3478,
-      "desc": "Start of the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station."
+      "desc": "Gateway to the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station."
     },
     {
       "name": "Sostegno della Bova",
@@ -91,7 +98,75 @@ window.NAVILE = {
       "desc": "End of the route on the plain, along natural paths and short road sections - ride with care."
     }
   ],
+  "attractions": [
+    {
+      "name": "Chiusa di Casalecchio",
+      "query": "Chiusa di Casalecchio, Casalecchio di Reno, Italy",
+      "lat": 44.4886,
+      "lon": 11.2846,
+      "desc": "Medieval sluice-dam on the River Reno (rebuilt 14th c.), a National Monument that still feeds Bologna's canals."
+    },
+    {
+      "name": "Parco della Chiusa (Parco Talon)",
+      "query": "Parco della Chiusa, Casalecchio di Reno, Italy",
+      "lat": 44.493,
+      "lon": 11.284,
+      "desc": "Large riverside park of woods, meadows and old villa grounds, just above the Chiusa."
+    },
+    {
+      "name": "Parco della Montagnola",
+      "query": "Parco della Montagnola, Bologna, Italy",
+      "lat": 44.4998,
+      "lon": 11.3452,
+      "desc": "Bologna's oldest public park, with a monumental stair down toward the old Navile port quarter."
+    },
+    {
+      "name": "Museo del Patrimonio Industriale",
+      "query": "Museo del Patrimonio Industriale, Bologna, Italy",
+      "lat": 44.5242,
+      "lon": 11.3437,
+      "desc": "Working models and machines telling the story of Bologna's water-powered industry (via della Beverara 123)."
+    },
+    {
+      "name": "Castello di Bentivoglio (Ponte Poledrano)",
+      "query": "Castello di Bentivoglio, Bentivoglio, Italy",
+      "lat": 44.6372,
+      "lon": 11.352,
+      "desc": "15th-century castle of Giovanni II Bentivoglio, with the frescoed 'Sala del Vaso'."
+    },
+    {
+      "name": "Oasi La Rizza",
+      "query": "Oasi La Rizza, Bentivoglio, Italy",
+      "lat": 44.648,
+      "lon": 11.372,
+      "desc": "Protected wetland reserve in the Bentivoglio woods - hides, trails and great birdwatching."
+    }
+  ],
   "track": [
+    [
+      44.4775,
+      11.286
+    ],
+    [
+      44.481,
+      11.295
+    ],
+    [
+      44.485,
+      11.306
+    ],
+    [
+      44.489,
+      11.317
+    ],
+    [
+      44.4935,
+      11.328
+    ],
+    [
+      44.4985,
+      11.339
+    ],
     [
       44.5045,
       11.3478

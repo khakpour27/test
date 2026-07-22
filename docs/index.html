@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
-  :root { --accent:#0b7285; --bg:#0b7285; }
+  :root { --accent:#0b7285; --bg:#0b7285; --attr:#e8590c; }
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
   #map { position:absolute; inset:0; }
@@ -49,8 +49,18 @@
     width:18px; height:18px; background:#1c7ed6; border:3px solid #fff;
     border-radius:50%; box-shadow:0 0 0 2px rgba(28,126,214,.4);
   }
-  .leaflet-popup-content { font-size:13px; line-height:1.4; }
+  .attr-pin {
+    width:24px; height:24px; background:var(--attr); border:2px solid #fff;
+    border-radius:50% 50% 50% 0; transform:rotate(-45deg);
+    box-shadow:0 1px 4px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center;
+  }
+  .attr-pin span { transform:rotate(45deg); color:#fff; font-size:12px; line-height:1; }
+  .leaflet-popup-content { font-size:13px; line-height:1.45; }
   .leaflet-popup-content b { color:var(--accent); }
+  .leaflet-popup-content .tag { display:inline-block; font-size:10px; text-transform:uppercase;
+    letter-spacing:.06em; font-weight:700; padding:1px 6px; border-radius:6px; margin-bottom:4px; }
+  .tag.attr { background:#fde3d1; color:#b34700; }
+  .tag.stop { background:#d3f0ee; color:#0b6b73; }
   .num { display:inline-block; min-width:20px; height:20px; line-height:20px;
     text-align:center; background:var(--accent); color:#fff; border-radius:50%;
     font-size:11px; margin-right:6px; }
@@ -58,7 +68,7 @@
 </head>
 <body>
 <div class="bar">
-  <h1>Ciclovia del Navile<small>Bologna &rarr; Malalbergo &middot; ~30 km &middot; mostly flat</small></h1>
+  <h1>Ciclovia del Navile<small>Casalecchio di Reno &rarr; Bologna &rarr; Malalbergo</small></h1>
   <button class="gpx" id="gpx">&#8681; GPX</button>
 </div>
 <div id="map"></div>
@@ -72,141 +82,158 @@
 <script>
 (function () {
   var D = window.NAVILE;
-  var map = L.map('map', { zoomControl:true }).setView([44.585, 11.40], 12);
+  var map = L.map('map', { zoomControl:true }).setView([44.56, 11.33], 11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
+    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   var banner = document.getElementById('banner');
-  function showBanner(html, spinning) {
-    banner.style.display = 'flex';
-    banner.innerHTML = (spinning ? '<span class="spin"></span>' : '') + '<span>' + html + '</span>';
-  }
-  function hideBanner() { banner.style.display = 'none'; }
+  function showBanner(html, spin){ banner.style.display='flex'; banner.innerHTML=(spin?'<span class="spin"></span>':'')+'<span>'+html+'</span>'; }
+  function hideBanner(){ banner.style.display='none'; }
 
-  // Approximate line drawn immediately as a fallback; replaced by the real
-  // path-following route once the routing service responds.
-  var routeCoords = D.track.slice();          // [ [lat,lon], ... ]
+  // ---- fallback line (replaced by snapped route once routing responds) ----
+  var routeCoords = D.track.slice();
   var line = L.polyline(routeCoords, { color:'#0b7285', weight:5, opacity:.5, dashArray:'6 8' }).addTo(map);
-  map.fitBounds(line.getBounds(), { padding:[30,30] });
+  map.fitBounds(line.getBounds(), { padding:[36,36] });
 
-  // POI markers
+  function popupLink(lat, lon){
+    return '<a href="https://www.google.com/maps/dir/?api=1&destination='+lat+','+lon+
+           '&travelmode=bicycling" target="_blank" rel="noopener">Directions to here &rarr;</a>';
+  }
+
+  // ---- Start marker ----
+  var start = D.start;
+  var startMk = L.marker([start.lat, start.lon], {
+    icon: L.divIcon({ className:'', iconSize:[22,22],
+      html:'<div style="width:20px;height:20px;background:#2b8a3e;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>' })
+  }).addTo(map);
+  function bindStart(){
+    startMk.bindPopup('<span class="tag stop">Start</span><br><b>'+start.name.replace('Start · ','')+
+      '</b><br>'+start.desc+'<br>'+popupLink(startMk.getLatLng().lat, startMk.getLatLng().lng));
+  }
+  bindStart();
+
+  // ---- Route waypoints (canal stops) ----
   D.pois.forEach(function (p, i) {
-    var start = i === 0, end = i === D.pois.length - 1;
-    var color = start ? '#2b8a3e' : end ? '#c92a2a' : '#0b7285';
-    var m = L.circleMarker([p.lat, p.lon], {
-      radius: start || end ? 9 : 7, color:'#fff', weight:2,
-      fillColor: color, fillOpacity:1
-    }).addTo(map);
-    m.bindPopup('<b><span class="num">' + (i+1) + '</span>' + p.name + '</b><br>' + p.desc +
-      '<br><a href="https://www.google.com/maps/dir/?api=1&destination=' +
-      p.lat + ',' + p.lon + '&travelmode=bicycling" target="_blank" rel="noopener">Directions to here &rarr;</a>');
+    var end = i === D.pois.length - 1;
+    var color = end ? '#c92a2a' : '#0b7285';
+    L.circleMarker([p.lat, p.lon], { radius: end?9:7, color:'#fff', weight:2, fillColor:color, fillOpacity:1 })
+      .addTo(map)
+      .bindPopup('<span class="tag stop">'+(end?'Finish':'Stop '+(i+1))+'</span><br><b>'+p.name+'</b><br>'+p.desc+'<br>'+popupLink(p.lat,p.lon));
   });
 
-  // ---- Snap the route to real cycleways/towpaths via BRouter ----
-  // We route through the canal corridor (a downsampled set of anchor points)
-  // so the result hugs the Navile towpath and follows mapped paths.
-  function vias() {
-    var t = D.track, out = [];
-    for (var i = 0; i < t.length; i += 2) out.push(t[i]);
-    if (out[out.length-1] !== t[t.length-1]) out.push(t[t.length-1]);
+  // ---- Attractions (distinct pins) ----
+  var attrMarks = D.attractions.map(function(a){
+    var mk = L.marker([a.lat, a.lon], {
+      icon: L.divIcon({ className:'', iconSize:[24,24], iconAnchor:[12,22],
+        html:'<div class="attr-pin"><span>&#9733;</span></div>' })
+    }).addTo(map);
+    mk.bindPopup('<span class="tag attr">Attraction</span><br><b>'+a.name+'</b><br>'+a.desc+'<br>'+popupLink(a.lat,a.lon));
+    return mk;
+  });
+
+  // ---- Geocode exact positions in-browser (Nominatim), with fallbacks ----
+  function geocode(query){
+    return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(query),
+                 { headers:{ 'Accept':'application/json' } })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .then(function(a){ return (a && a[0]) ? [parseFloat(a[0].lat), parseFloat(a[0].lon)] : null; })
+      .catch(function(){ return null; });
+  }
+  function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+
+  // Resolve start first (affects routing), then attractions (markers only). ~1.1s apart per Nominatim policy.
+  geocode(start.query).then(function(ll){
+    if(ll){ start.lat=ll[0]; start.lon=ll[1]; startMk.setLatLng(ll); bindStart(); routeCoords[0]=ll; line.setLatLngs(routeCoords); }
+    runRouting();
+    (async function(){
+      for(var i=0;i<D.attractions.length;i++){
+        await sleep(1100);
+        var g = await geocode(D.attractions[i].query);
+        if(g){ D.attractions[i].lat=g[0]; D.attractions[i].lon=g[1];
+          attrMarks[i].setLatLng(g);
+          attrMarks[i].setPopupContent('<span class="tag attr">Attraction</span><br><b>'+D.attractions[i].name+'</b><br>'+D.attractions[i].desc+'<br>'+popupLink(g[0],g[1]));
+        }
+      }
+    })();
+  });
+
+  // ---- Snap the ride to real bike paths via BRouter ----
+  function vias(){
+    var out=[[start.lat, start.lon]], t=D.track;
+    for(var i=2;i<t.length;i+=2) out.push(t[i]);
+    if(out[out.length-1]!==t[t.length-1]) out.push(t[t.length-1]);
     return out;
   }
-  function brouterURL(profile) {
-    var ll = vias().map(function(p){ return p[1] + ',' + p[0]; }).join('|'); // lon,lat
-    return 'https://brouter.de/brouter?lonlats=' + ll +
-           '&profile=' + profile + '&alternativeidx=0&format=geojson';
+  function brouterURL(profile){
+    var ll = vias().map(function(p){ return p[1]+','+p[0]; }).join('|');
+    return 'https://brouter.de/brouter?lonlats='+ll+'&profile='+profile+'&alternativeidx=0&format=geojson';
   }
-  function applyRoute(coords) {  // coords: [ [lat,lon], ... ]
-    routeCoords = coords;
-    line.setLatLngs(coords);
+  function applyRoute(coords){
+    routeCoords = coords; line.setLatLngs(coords);
     line.setStyle({ opacity:.9, dashArray:null, weight:5 });
-    map.fitBounds(line.getBounds(), { padding:[30,30] });
+    map.fitBounds(line.getBounds(), { padding:[36,36] });
   }
-  function tryProfile(profiles, i) {
-    if (i >= profiles.length) {
-      showBanner('Showing an approximate line – routing service unreachable. The GPX still works in OsmAnd/Komoot.', false);
-      setTimeout(hideBanner, 7000);
-      return;
-    }
+  function tryProfile(profiles, i){
+    if(i>=profiles.length){ showBanner('Showing an approximate line - routing service unreachable. The GPX still works in OsmAnd/Komoot.', false); setTimeout(hideBanner,7000); return; }
     fetch(brouterURL(profiles[i]))
-      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
       .then(function(gj){
-        var f = gj.features && gj.features[0];
-        var c = f && f.geometry && f.geometry.coordinates;
-        if (!c || !c.length) throw new Error('empty');
-        applyRoute(c.map(function(p){ return [p[1], p[0]]; }));  // lon,lat -> lat,lon
-        var km = f.properties && f.properties['track-length'] ? (f.properties['track-length']/1000).toFixed(1) : null;
-        showBanner('Route snapped to real bike paths' + (km ? ' · ' + km + ' km' : ''), false);
-        setTimeout(hideBanner, 4000);
+        var f=gj.features&&gj.features[0], c=f&&f.geometry&&f.geometry.coordinates;
+        if(!c||!c.length) throw 0;
+        applyRoute(c.map(function(p){ return [p[1],p[0]]; }));
+        var km=f.properties&&f.properties['track-length'] ? (f.properties['track-length']/1000).toFixed(1) : null;
+        showBanner('Route snapped to real bike paths'+(km?' · '+km+' km':''), false); setTimeout(hideBanner,4500);
       })
       .catch(function(){ tryProfile(profiles, i+1); });
   }
-  showBanner('Finding the real bike route along the canal…', true);
-  tryProfile(['trekking','gravel','fastbike'], 0);
+  function runRouting(){ showBanner('Finding the real bike route from Casalecchio…', true); tryProfile(['trekking','gravel','fastbike'],0); }
 
-  // ---- GPX export (uses the routed geometry when available) ----
+  // ---- GPX export (uses snapped geometry + resolved marker positions) ----
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function buildGPX() {
-    var g = '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Ciclovia del Navile" xmlns="http://www.topografix.com/GPX/1/1">\n';
-    g += '<metadata><name>Ciclovia del Navile</name></metadata>\n';
-    D.pois.forEach(function(p){ g += '<wpt lat="'+p.lat+'" lon="'+p.lon+'"><name>'+esc(p.name)+'</name><desc>'+esc(p.desc)+'</desc></wpt>\n'; });
-    g += '<trk><name>Ciclovia del Navile</name><trkseg>\n';
-    routeCoords.forEach(function(c){ g += '<trkpt lat="'+c[0]+'" lon="'+c[1]+'"></trkpt>\n'; });
-    g += '</trkseg></trk>\n</gpx>\n';
-    return g;
+  function buildGPX(){
+    var g='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Ciclovia del Navile" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>Ciclovia del Navile</name></metadata>\n';
+    g+='<wpt lat="'+start.lat+'" lon="'+start.lon+'"><name>'+esc(start.name)+'</name><desc>'+esc(start.desc)+'</desc></wpt>\n';
+    D.pois.forEach(function(p){ g+='<wpt lat="'+p.lat+'" lon="'+p.lon+'"><name>'+esc(p.name)+'</name><desc>'+esc(p.desc)+'</desc></wpt>\n'; });
+    D.attractions.forEach(function(a){ g+='<wpt lat="'+a.lat+'" lon="'+a.lon+'"><name>'+esc(a.name)+'</name><desc>'+esc(a.desc)+'</desc><sym>Tourist Info</sym></wpt>\n'; });
+    g+='<trk><name>Ciclovia del Navile</name><trkseg>\n';
+    routeCoords.forEach(function(c){ g+='<trkpt lat="'+c[0]+'" lon="'+c[1]+'"></trkpt>\n'; });
+    g+='</trkseg></trk>\n</gpx>\n'; return g;
   }
   document.getElementById('gpx').addEventListener('click', function(){
-    var blob = new Blob([buildGPX()], { type:'application/gpx+xml' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'navile.gpx';
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([buildGPX()],{type:'application/gpx+xml'})); a.download='navile.gpx';
     document.body.appendChild(a); a.click(); a.remove();
   });
 
   // ---- Live location ----
-  var meDot = null, meAcc = null, following = false, watchId = null;
-  var status = document.getElementById('status');
-  var locateBtn = document.getElementById('locate');
-  var meIcon = L.divIcon({ className:'', html:'<div class="me-dot"></div>', iconSize:[18,18] });
+  var meDot=null, meAcc=null, following=false, watchId=null;
+  var status=document.getElementById('status'), locateBtn=document.getElementById('locate');
+  var meIcon=L.divIcon({ className:'', html:'<div class="me-dot"></div>', iconSize:[18,18] });
+  var ALL=[{name:start.name.replace('Start · ',''),lat:start.lat,lon:start.lon}].concat(D.pois);
 
   function toRad(x){ return x*Math.PI/180; }
-  function distM(a,b){
-    var R=6371000, dLat=toRad(b[0]-a[0]), dLon=toRad(b[1]-a[1]);
-    var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLon/2)*Math.sin(dLon/2);
-    return 2*R*Math.asin(Math.sqrt(s));
-  }
-  function nextPoi(pos){
-    var best=null, bd=Infinity;
-    D.pois.forEach(function(p){ var d=distM(pos,[p.lat,p.lon]); if(d<bd){bd=d; best=p;} });
-    return { poi:best, d:bd };
-  }
+  function distM(a,b){ var R=6371000,dLa=toRad(b[0]-a[0]),dLo=toRad(b[1]-a[1]);
+    var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return 2*R*Math.asin(Math.sqrt(s)); }
+  function nextPoi(pos){ var best=null,bd=Infinity; ALL.forEach(function(p){ var d=distM(pos,[p.lat,p.lon]); if(d<bd){bd=d;best=p;} }); return {poi:best,d:bd}; }
   function fmt(m){ return m>=1000 ? (m/1000).toFixed(1)+' km' : Math.round(m)+' m'; }
 
   function onPos(e){
-    var ll = [e.coords.latitude, e.coords.longitude];
-    if(!meDot){
-      meDot = L.marker(ll,{icon:meIcon, zIndexOffset:1000}).addTo(map);
-      meAcc = L.circle(ll,{radius:e.coords.accuracy, color:'#1c7ed6', weight:1, fillOpacity:.08}).addTo(map);
-    } else { meDot.setLatLng(ll); meAcc.setLatLng(ll).setRadius(e.coords.accuracy); }
+    var ll=[e.coords.latitude, e.coords.longitude];
+    if(!meDot){ meDot=L.marker(ll,{icon:meIcon,zIndexOffset:1000}).addTo(map);
+      meAcc=L.circle(ll,{radius:e.coords.accuracy,color:'#1c7ed6',weight:1,fillOpacity:.08}).addTo(map); }
+    else { meDot.setLatLng(ll); meAcc.setLatLng(ll).setRadius(e.coords.accuracy); }
     if(following) map.setView(ll, Math.max(map.getZoom(),16), {animate:true});
-    var n = nextPoi(ll);
-    status.style.display='block';
-    status.innerHTML = 'Nearest point: <b>'+n.poi.name+'</b><br>'+fmt(n.d)+' away';
+    var n=nextPoi(ll); status.style.display='block';
+    status.innerHTML='Nearest stop: <b>'+n.poi.name+'</b><br>'+fmt(n.d)+' away';
   }
-  function onErr(err){
-    status.style.display='block';
-    status.textContent = 'Location unavailable: ' + err.message;
-  }
+  function onErr(err){ status.style.display='block'; status.textContent='Location unavailable: '+err.message; }
   locateBtn.addEventListener('click', function(){
     if(!('geolocation' in navigator)){ status.style.display='block'; status.textContent='Geolocation not supported on this device.'; return; }
-    if(watchId===null){
-      watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
-    }
-    following = !following;
-    locateBtn.classList.toggle('follow', following);
-    locateBtn.innerHTML = following ? '&#10148;' : '&#9678;';
-    if(following && meDot) map.setView(meDot.getLatLng(), Math.max(map.getZoom(),16));
+    if(watchId===null) watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:2000,timeout:15000});
+    following=!following; locateBtn.classList.toggle('follow',following); locateBtn.innerHTML=following?'&#10148;':'&#9678;';
+    if(following&&meDot) map.setView(meDot.getLatLng(), Math.max(map.getZoom(),16));
   });
   map.on('dragstart', function(){ if(following){ following=false; locateBtn.classList.remove('follow'); locateBtn.innerHTML='&#9678;'; }});
 })();

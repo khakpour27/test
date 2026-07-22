@@ -2,11 +2,16 @@
 <gpx version="1.1" creator="Ciclovia del Navile" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
   <metadata>
     <name>Ciclovia del Navile</name>
-    <desc>Bologna (Porta Galliera) to Malalbergo along the Navile canal, ~30 km, mostly flat, mixed surface.</desc>
+    <desc>Casalecchio di Reno to Malalbergo via Bologna and the Navile canal.</desc>
   </metadata>
+  <wpt lat="44.4775" lon="11.286">
+    <name>Start · Via Don Filippo Ercolani</name>
+    <desc>Ride start in Casalecchio di Reno. From here the route crosses to Bologna and picks up the Navile canal.</desc>
+    <sym>Flag</sym>
+  </wpt>
   <wpt lat="44.5045" lon="11.3478">
-    <name>Porta Galliera (start)</name>
-    <desc>Start of the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station.</desc>
+    <name>Porta Galliera</name>
+    <desc>Gateway to the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station.</desc>
     <sym>Waypoint</sym>
   </wpt>
   <wpt lat="44.509" lon="11.3388">
@@ -79,9 +84,45 @@
     <desc>End of the route on the plain, along natural paths and short road sections - ride with care.</desc>
     <sym>Waypoint</sym>
   </wpt>
+  <wpt lat="44.4886" lon="11.2846">
+    <name>Chiusa di Casalecchio</name>
+    <desc>Medieval sluice-dam on the River Reno (rebuilt 14th c.), a National Monument that still feeds Bologna&#x27;s canals.</desc>
+    <sym>Tourist Info</sym>
+  </wpt>
+  <wpt lat="44.493" lon="11.284">
+    <name>Parco della Chiusa (Parco Talon)</name>
+    <desc>Large riverside park of woods, meadows and old villa grounds, just above the Chiusa.</desc>
+    <sym>Tourist Info</sym>
+  </wpt>
+  <wpt lat="44.4998" lon="11.3452">
+    <name>Parco della Montagnola</name>
+    <desc>Bologna&#x27;s oldest public park, with a monumental stair down toward the old Navile port quarter.</desc>
+    <sym>Tourist Info</sym>
+  </wpt>
+  <wpt lat="44.5242" lon="11.3437">
+    <name>Museo del Patrimonio Industriale</name>
+    <desc>Working models and machines telling the story of Bologna&#x27;s water-powered industry (via della Beverara 123).</desc>
+    <sym>Tourist Info</sym>
+  </wpt>
+  <wpt lat="44.6372" lon="11.352">
+    <name>Castello di Bentivoglio (Ponte Poledrano)</name>
+    <desc>15th-century castle of Giovanni II Bentivoglio, with the frescoed &#x27;Sala del Vaso&#x27;.</desc>
+    <sym>Tourist Info</sym>
+  </wpt>
+  <wpt lat="44.648" lon="11.372">
+    <name>Oasi La Rizza</name>
+    <desc>Protected wetland reserve in the Bentivoglio woods - hides, trails and great birdwatching.</desc>
+    <sym>Tourist Info</sym>
+  </wpt>
   <trk>
     <name>Ciclovia del Navile</name>
     <trkseg>
+      <trkpt lat="44.4775" lon="11.286"></trkpt>
+      <trkpt lat="44.481" lon="11.295"></trkpt>
+      <trkpt lat="44.485" lon="11.306"></trkpt>
+      <trkpt lat="44.489" lon="11.317"></trkpt>
+      <trkpt lat="44.4935" lon="11.328"></trkpt>
+      <trkpt lat="44.4985" lon="11.339"></trkpt>
       <trkpt lat="44.5045" lon="11.3478"></trkpt>
       <trkpt lat="44.5062" lon="11.347"></trkpt>
       <trkpt lat="44.508" lon="11.343"></trkpt>

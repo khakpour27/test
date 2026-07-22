@@ -51,17 +51,24 @@ The file contains named **waypoints** for each point of interest plus a **track*
 14. Oasi La Rizza — nature reserve, birdwatching
 15. Malalbergo (end)
 
-## A note on accuracy
+## How positions are made accurate
 
-The **waypoints** sit on the real locations. For the route line, the **map app snaps to real
-bike paths**: when `index.html` loads in your browser it asks the [BRouter](https://brouter.de)
-cycling engine to route through the canal corridor, so the line follows mapped cycleways and
-towpaths — and the in-app **↓ GPX** button exports that snapped track. If the routing service
-can't be reached, the app falls back to an approximate dashed line and says so.
+Nothing critical relies on my hand-typed coordinates. When `index.html` loads in your browser it
+resolves everything against **live OpenStreetMap data**:
 
-The standalone **`docs/navile.gpx`** file (the direct download link) is the *approximate* version
-baked at build time — fine as an overview, but for exact turn-by-turn use the app's GPX export,
-or import any GPX into OsmAnd/Komoot and let it re-route along mapped paths.
+- **The route line** is traced from the real **Canale Navile** geometry (fetched via the
+  [Overpass API](https://overpass-api.de)), then snapped to actual cycleways/towpaths with the
+  [BRouter](https://brouter.de) cycling engine — so it follows the canal path, not a straight guess.
+- **Every stop and attraction** is geocoded to its real OSM location
+  ([Nominatim](https://nominatim.openstreetmap.org)) and cached in your browser, so it only looks up
+  once per device.
+- The in-app **↓ GPX** button exports whatever the app is currently showing (the snapped track +
+  resolved waypoints).
+
+Each step falls back gracefully (and the banner tells you which path it took) if a service is
+unreachable. The hardcoded values in `gen.py` / `docs/navile.gpx` are only fallbacks and a coarse
+offline overview — for exact turn-by-turn use the app's GPX export or import any GPX into
+OsmAnd/Komoot.
 
 The official route is not signposted — carry a map/GPS, watch for limited water sources,
 and check the weather before you go.

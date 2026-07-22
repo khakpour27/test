@@ -19,8 +19,7 @@
   .bar {
     position:absolute; top:0; left:0; right:0; z-index:1000;
     background:var(--bg); color:#fff; padding:10px 14px;
-    display:flex; align-items:center; gap:10px;
-    box-shadow:0 1px 6px rgba(0,0,0,.3);
+    display:flex; align-items:center; gap:10px; box-shadow:0 1px 6px rgba(0,0,0,.3);
   }
   .bar h1 { font-size:15px; margin:0; font-weight:600; flex:1; line-height:1.2; }
   .bar small { display:block; font-weight:400; opacity:.85; font-size:11px; }
@@ -42,22 +41,18 @@
   }
   #banner {
     position:absolute; z-index:1000; left:50%; transform:translateX(-50%);
-    top:60px; background:rgba(20,20,20,.86); color:#fff; padding:7px 13px;
+    top:100px; background:rgba(20,20,20,.86); color:#fff; padding:7px 13px;
     border-radius:20px; font-size:12.5px; display:none; align-items:center; gap:8px;
     box-shadow:0 2px 10px rgba(0,0,0,.3); max-width:90%;
   }
   #banner .spin { width:13px; height:13px; border:2px solid rgba(255,255,255,.35);
     border-top-color:#fff; border-radius:50%; animation:sp .8s linear infinite; flex:none; }
   @keyframes sp { to { transform:rotate(360deg); } }
-  .me-dot {
-    width:18px; height:18px; background:#1c7ed6; border:3px solid #fff;
-    border-radius:50%; box-shadow:0 0 0 2px rgba(28,126,214,.4);
-  }
-  .attr-pin {
-    width:24px; height:24px; background:var(--attr); border:2px solid #fff;
+  .me-dot { width:18px; height:18px; background:#1c7ed6; border:3px solid #fff;
+    border-radius:50%; box-shadow:0 0 0 2px rgba(28,126,214,.4); }
+  .attr-pin { width:24px; height:24px; background:var(--attr); border:2px solid #fff;
     border-radius:50% 50% 50% 0; transform:rotate(-45deg);
-    box-shadow:0 1px 4px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center;
-  }
+    box-shadow:0 1px 4px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; }
   .attr-pin span { transform:rotate(45deg); color:#fff; font-size:12px; line-height:1; }
   .leaflet-popup-content { font-size:13px; line-height:1.45; }
   .leaflet-popup-content b { color:var(--accent); }
@@ -65,9 +60,6 @@
     letter-spacing:.06em; font-weight:700; padding:1px 6px; border-radius:6px; margin-bottom:4px; }
   .tag.attr { background:#fde3d1; color:#b34700; }
   .tag.stop { background:#d3f0ee; color:#0b6b73; }
-  .num { display:inline-block; min-width:20px; height:20px; line-height:20px;
-    text-align:center; background:var(--accent); color:#fff; border-radius:50%;
-    font-size:11px; margin-right:6px; }
 </style>
 </head>
 <body>
@@ -88,24 +80,24 @@
   var D = window.NAVILE;
   var map = L.map('map', { zoomControl:true }).setView([44.56, 11.33], 11);
   var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+    maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
   var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics'
-  });
-  var labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19
-  });
-  var satellite = L.layerGroup([sat, labels]);
-  L.control.layers({ 'Map': osm, 'Satellite': satellite }, null, { position:'topright', collapsed:false }).addTo(map);
+    maxZoom:19, attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics' });
+  var labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 });
+  L.control.layers({ 'Map':osm, 'Satellite':L.layerGroup([sat,labels]) }, null, { position:'topright', collapsed:false }).addTo(map);
 
   var banner = document.getElementById('banner');
   function showBanner(html, spin){ banner.style.display='flex'; banner.innerHTML=(spin?'<span class="spin"></span>':'')+'<span>'+html+'</span>'; }
   function hideBanner(){ banner.style.display='none'; }
 
-  // ---- fallback line (replaced by snapped route once routing responds) ----
+  function toRad(x){ return x*Math.PI/180; }
+  function distM(a,b){ var R=6371000,dLa=toRad(b[0]-a[0]),dLo=toRad(b[1]-a[1]);
+    var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return 2*R*Math.asin(Math.sqrt(s)); }
+
+  // ---- fallback line (replaced once the real geometry loads) ----
   var routeCoords = D.track.slice();
-  var line = L.polyline(routeCoords, { color:'#0b7285', weight:5, opacity:.5, dashArray:'6 8' }).addTo(map);
+  var line = L.polyline(routeCoords, { color:'#0b7285', weight:5, opacity:.45, dashArray:'6 8' }).addTo(map);
   map.fitBounds(line.getBounds(), { padding:[36,36] });
 
   function popupLink(lat, lon){
@@ -113,95 +105,125 @@
            '&travelmode=bicycling" target="_blank" rel="noopener">Directions to here &rarr;</a>';
   }
 
-  // ---- Start marker ----
+  // ---- Markers ----
   var start = D.start;
-  var startMk = L.marker([start.lat, start.lon], {
-    icon: L.divIcon({ className:'', iconSize:[22,22],
-      html:'<div style="width:20px;height:20px;background:#2b8a3e;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>' })
-  }).addTo(map);
-  function bindStart(){
-    startMk.bindPopup('<span class="tag stop">Start</span><br><b>'+start.name.replace('Start · ','')+
-      '</b><br>'+start.desc+'<br>'+popupLink(startMk.getLatLng().lat, startMk.getLatLng().lng));
-  }
+  var startMk = L.marker([start.lat, start.lon], { icon: L.divIcon({ className:'', iconSize:[22,22],
+    html:'<div style="width:20px;height:20px;background:#2b8a3e;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>' }) }).addTo(map);
+  function bindStart(){ startMk.bindPopup('<span class="tag stop">Start</span><br><b>'+start.name.replace('Start · ','')+'</b><br>'+start.desc+'<br>'+popupLink(start.lat,start.lon)); }
   bindStart();
 
-  // ---- Route waypoints (canal stops) ----
-  D.pois.forEach(function (p, i) {
-    var end = i === D.pois.length - 1;
-    var color = end ? '#c92a2a' : '#0b7285';
-    L.circleMarker([p.lat, p.lon], { radius: end?9:7, color:'#fff', weight:2, fillColor:color, fillOpacity:1 })
-      .addTo(map)
-      .bindPopup('<span class="tag stop">'+(end?'Finish':'Stop '+(i+1))+'</span><br><b>'+p.name+'</b><br>'+p.desc+'<br>'+popupLink(p.lat,p.lon));
+  var poiMarks = D.pois.map(function(p,i){
+    var end = i===D.pois.length-1;
+    var mk = L.circleMarker([p.lat,p.lon], { radius:end?9:7, color:'#fff', weight:2, fillColor:end?'#c92a2a':'#0b7285', fillOpacity:1 }).addTo(map);
+    bindPoi(mk,p,i); return mk;
   });
+  function bindPoi(mk,p,i){ var end=i===D.pois.length-1;
+    mk.bindPopup('<span class="tag stop">'+(end?'Finish':'Stop '+(i+1))+'</span><br><b>'+p.name+'</b><br>'+p.desc+'<br>'+popupLink(p.lat,p.lon)); }
 
-  // ---- Attractions (distinct pins) ----
   var attrMarks = D.attractions.map(function(a){
-    var mk = L.marker([a.lat, a.lon], {
-      icon: L.divIcon({ className:'', iconSize:[24,24], iconAnchor:[12,22],
-        html:'<div class="attr-pin"><span>&#9733;</span></div>' })
-    }).addTo(map);
-    mk.bindPopup('<span class="tag attr">Attraction</span><br><b>'+a.name+'</b><br>'+a.desc+'<br>'+popupLink(a.lat,a.lon));
-    return mk;
+    var mk = L.marker([a.lat,a.lon], { icon: L.divIcon({ className:'', iconSize:[24,24], iconAnchor:[12,22],
+      html:'<div class="attr-pin"><span>&#9733;</span></div>' }) }).addTo(map);
+    bindAttr(mk,a); return mk;
   });
+  function bindAttr(mk,a){ mk.bindPopup('<span class="tag attr">Attraction</span><br><b>'+a.name+'</b><br>'+a.desc+'<br>'+popupLink(a.lat,a.lon)); }
 
-  // ---- Geocode exact positions in-browser (Nominatim), with fallbacks ----
-  function geocode(query){
-    return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(query),
-                 { headers:{ 'Accept':'application/json' } })
-      .then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(a){ return (a && a[0]) ? [parseFloat(a[0].lat), parseFloat(a[0].lon)] : null; })
+  // ---- Geocoding (Nominatim) with localStorage cache ----
+  function cacheGet(q){ try{ var v=localStorage.getItem('nav_geo_'+q); return v?JSON.parse(v):null; }catch(e){ return null; } }
+  function cacheSet(q,ll){ try{ localStorage.setItem('nav_geo_'+q, JSON.stringify(ll)); }catch(e){} }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+  function geocode(q){
+    var c=cacheGet(q); if(c) return Promise.resolve(c);
+    return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))
+      .then(function(r){ return r.ok?r.json():[]; })
+      .then(function(a){ if(a&&a[0]){ var ll=[parseFloat(a[0].lat),parseFloat(a[0].lon)]; cacheSet(q,ll); return ll; } return null; })
       .catch(function(){ return null; });
   }
-  function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
 
-  // Resolve start first (affects routing), then attractions (markers only). ~1.1s apart per Nominatim policy.
-  geocode(start.query).then(function(ll){
-    if(ll){ start.lat=ll[0]; start.lon=ll[1]; startMk.setLatLng(ll); bindStart(); routeCoords[0]=ll; line.setLatLngs(routeCoords); }
-    runRouting();
-    (async function(){
-      for(var i=0;i<D.attractions.length;i++){
-        await sleep(1100);
-        var g = await geocode(D.attractions[i].query);
-        if(g){ D.attractions[i].lat=g[0]; D.attractions[i].lon=g[1];
-          attrMarks[i].setLatLng(g);
-          attrMarks[i].setPopupContent('<span class="tag attr">Attraction</span><br><b>'+D.attractions[i].name+'</b><br>'+D.attractions[i].desc+'<br>'+popupLink(g[0],g[1]));
-        }
-      }
-    })();
-  });
+  (async function resolveAll(){
+    // Start first (feeds routing), then build the route, then resolve stops + attractions.
+    var s = await geocode(start.query);
+    if(s){ start.lat=s[0]; start.lon=s[1]; startMk.setLatLng(s); bindStart(); routeCoords[0]=s; line.setLatLngs(routeCoords); }
+    buildRoute();
+    var items = D.pois.map(function(p,i){ return {o:p, mk:poiMarks[i], reb:function(){ bindPoi(poiMarks[i],p,i); }}; })
+      .concat(D.attractions.map(function(a,i){ return {o:a, mk:attrMarks[i], reb:function(){ bindAttr(attrMarks[i],a); }}; }));
+    for(var k=0;k<items.length;k++){
+      var it=items[k], cached=cacheGet(it.o.query);
+      var ll = cached || await geocode(it.o.query);
+      if(ll){ it.o.lat=ll[0]; it.o.lon=ll[1]; it.mk.setLatLng(ll); it.reb(); }
+      if(!cached) await sleep(1100); // be polite to Nominatim on first load only
+    }
+  })();
 
-  // ---- Snap the ride to real bike paths via BRouter ----
-  function vias(){
-    var out=[[start.lat, start.lon]], t=D.track;
-    for(var i=2;i<t.length;i+=2) out.push(t[i]);
-    if(out[out.length-1]!==t[t.length-1]) out.push(t[t.length-1]);
-    return out;
+  // ---- Real canal geometry from OpenStreetMap (Overpass) ----
+  function fetchCanal(){
+    var q = '[out:json][timeout:25];way["waterway"="canal"]["name"~"Navile"](44.44,11.25,44.75,11.56);out geom;';
+    var url = 'https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q);
+    return fetch(url).then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){
+        if(!j||!j.elements) return null;
+        var segs = j.elements.filter(function(e){ return e.geometry&&e.geometry.length>1; })
+          .map(function(e){ return e.geometry.map(function(g){ return [g.lat,g.lon]; }); });
+        return segs.length ? trimCanal(chainSegs(segs)) : null;
+      }).catch(function(){ return null; });
   }
-  function brouterURL(profile){
-    var ll = vias().map(function(p){ return p[1]+','+p[0]; }).join('|');
+  function chainSegs(segs){
+    segs = segs.slice(); var chain = segs.shift().slice(), moved=true;
+    while(segs.length && moved){
+      moved=false; var head=chain[0], tail=chain[chain.length-1], best=null;
+      for(var i=0;i<segs.length;i++){ var s=segs[i], a=s[0], b=s[s.length-1];
+        [ {g:distM(tail,a),w:'t',rev:false,i:i}, {g:distM(tail,b),w:'t',rev:true,i:i},
+          {g:distM(head,b),w:'h',rev:false,i:i}, {g:distM(head,a),w:'h',rev:true,i:i} ]
+          .forEach(function(c){ if(!best||c.g<best.g) best=c; }); }
+      if(best && best.g<900){ var s=segs.splice(best.i,1)[0]; var seg=best.rev?s.slice().reverse():s.slice();
+        chain = best.w==='t' ? chain.concat(seg) : seg.concat(chain); moved=true; }
+    }
+    return chain;
+  }
+  function nearestIdx(P,pt){ var bi=0,bd=Infinity; for(var i=0;i<P.length;i++){ var d=distM(P[i],pt); if(d<bd){bd=d;bi=i;} } return bi; }
+  function trimCanal(P){
+    if(P.length<5) return null;
+    var pg=[D.pois[0].lat,D.pois[0].lon], mb=[D.pois[D.pois.length-1].lat,D.pois[D.pois.length-1].lon];
+    var i=nearestIdx(P,pg), j=nearestIdx(P,mb);
+    var seg = i<=j ? P.slice(i,j+1) : P.slice(j,i+1).reverse();
+    return seg.length>=5 ? seg : null;
+  }
+  function downsample(seg,n){ if(seg.length<=n) return seg; var out=[],step=(seg.length-1)/(n-1);
+    for(var k=0;k<n;k++) out.push(seg[Math.round(k*step)]); return out; }
+
+  // ---- BRouter: snap a set of vias to real bike paths ----
+  function brouterURL(vias, profile){
+    var ll = vias.map(function(p){ return p[1]+','+p[0]; }).join('|');
     return 'https://brouter.de/brouter?lonlats='+ll+'&profile='+profile+'&alternativeidx=0&format=geojson';
   }
-  function applyRoute(coords){
-    routeCoords = coords; line.setLatLngs(coords);
-    line.setStyle({ opacity:.9, dashArray:null, weight:5 });
-    map.fitBounds(line.getBounds(), { padding:[36,36] });
-  }
-  function tryProfile(profiles, i){
-    if(i>=profiles.length){ showBanner('Showing an approximate line - routing service unreachable. The GPX still works in OsmAnd/Komoot.', false); setTimeout(hideBanner,7000); return; }
-    fetch(brouterURL(profiles[i]))
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-      .then(function(gj){
-        var f=gj.features&&gj.features[0], c=f&&f.geometry&&f.geometry.coordinates;
+  function brouter(vias, profiles, i){
+    i=i||0; if(i>=profiles.length) return Promise.resolve(null);
+    return fetch(brouterURL(vias,profiles[i])).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(gj){ var f=gj.features&&gj.features[0], c=f&&f.geometry&&f.geometry.coordinates;
         if(!c||!c.length) throw 0;
-        applyRoute(c.map(function(p){ return [p[1],p[0]]; }));
-        var km=f.properties&&f.properties['track-length'] ? (f.properties['track-length']/1000).toFixed(1) : null;
-        showBanner('Route snapped to real bike paths'+(km?' · '+km+' km':''), false); setTimeout(hideBanner,4500);
-      })
-      .catch(function(){ tryProfile(profiles, i+1); });
+        return { coords:c.map(function(p){ return [p[1],p[0]]; }),
+                 km:f.properties&&f.properties['track-length']?(f.properties['track-length']/1000).toFixed(1):null }; })
+      .catch(function(){ return brouter(vias,profiles,i+1); });
   }
-  function runRouting(){ showBanner('Finding the real bike route from Casalecchio…', true); tryProfile(['trekking','gravel','fastbike'],0); }
+  function applyRoute(coords){ routeCoords=coords; line.setLatLngs(coords);
+    line.setStyle({ opacity:.9, dashArray:null, weight:5 }); map.fitBounds(line.getBounds(),{padding:[36,36]}); }
 
-  // ---- GPX export (uses snapped geometry + resolved marker positions) ----
+  async function buildRoute(){
+    showBanner('Tracing the Navile canal from OpenStreetMap…', true);
+    var canal = await fetchCanal();
+    var vias, viaNote;
+    if(canal){ vias=[[start.lat,start.lon]].concat(downsample(canal,20)); viaNote='canal'; }
+    else { var t=D.track, v=[[start.lat,start.lon]]; for(var x=2;x<t.length;x+=2) v.push(t[x]); v.push(t[t.length-1]); vias=v; viaNote='approx'; }
+    var res = await brouter(vias, ['trekking','gravel','fastbike']);
+    if(res){ applyRoute(res.coords);
+      showBanner((viaNote==='canal'?'Snapped to the canal bike path':'Routed on bike paths (canal data unavailable)')+(res.km?' · '+res.km+' km':''), false);
+      setTimeout(hideBanner, 5000); return; }
+    if(canal){ applyRoute([[start.lat,start.lon]].concat(canal));
+      showBanner('Traced along the Navile canal (couldn’t snap to paths)', false); setTimeout(hideBanner,6000); return; }
+    showBanner('Showing an approximate line - map services unreachable. The GPX still works in OsmAnd/Komoot.', false);
+    setTimeout(hideBanner, 7000);
+  }
+
+  // ---- GPX export ----
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function buildGPX(){
     var g='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Ciclovia del Navile" xmlns="http://www.topografix.com/GPX/1/1">\n<metadata><name>Ciclovia del Navile</name></metadata>\n';
@@ -213,32 +235,25 @@
     g+='</trkseg></trk>\n</gpx>\n'; return g;
   }
   document.getElementById('gpx').addEventListener('click', function(){
-    var a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([buildGPX()],{type:'application/gpx+xml'})); a.download='navile.gpx';
-    document.body.appendChild(a); a.click(); a.remove();
+    var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buildGPX()],{type:'application/gpx+xml'}));
+    a.download='navile.gpx'; document.body.appendChild(a); a.click(); a.remove();
   });
 
   // ---- Live location ----
   var meDot=null, meAcc=null, following=false, watchId=null;
   var status=document.getElementById('status'), locateBtn=document.getElementById('locate');
   var meIcon=L.divIcon({ className:'', html:'<div class="me-dot"></div>', iconSize:[18,18] });
-  var ALL=[{name:start.name.replace('Start · ',''),lat:start.lat,lon:start.lon}].concat(D.pois);
-
-  function toRad(x){ return x*Math.PI/180; }
-  function distM(a,b){ var R=6371000,dLa=toRad(b[0]-a[0]),dLo=toRad(b[1]-a[1]);
-    var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLo/2)*Math.sin(dLo/2);
-    return 2*R*Math.asin(Math.sqrt(s)); }
-  function nextPoi(pos){ var best=null,bd=Infinity; ALL.forEach(function(p){ var d=distM(pos,[p.lat,p.lon]); if(d<bd){bd=d;best=p;} }); return {poi:best,d:bd}; }
+  var ALL=[start].concat(D.pois);  // live objects; positions update as they resolve
+  function nextStop(pos){ var best=null,bd=Infinity; ALL.forEach(function(p){ var d=distM(pos,[p.lat,p.lon]); if(d<bd){bd=d;best=p;} }); return {p:best,d:bd}; }
   function fmt(m){ return m>=1000 ? (m/1000).toFixed(1)+' km' : Math.round(m)+' m'; }
-
   function onPos(e){
     var ll=[e.coords.latitude, e.coords.longitude];
     if(!meDot){ meDot=L.marker(ll,{icon:meIcon,zIndexOffset:1000}).addTo(map);
       meAcc=L.circle(ll,{radius:e.coords.accuracy,color:'#1c7ed6',weight:1,fillOpacity:.08}).addTo(map); }
     else { meDot.setLatLng(ll); meAcc.setLatLng(ll).setRadius(e.coords.accuracy); }
     if(following) map.setView(ll, Math.max(map.getZoom(),16), {animate:true});
-    var n=nextPoi(ll); status.style.display='block';
-    status.innerHTML='Nearest stop: <b>'+n.poi.name+'</b><br>'+fmt(n.d)+' away';
+    var n=nextStop(ll); status.style.display='block';
+    status.innerHTML='Nearest stop: <b>'+(n.p.name||'').replace('Start · ','')+'</b><br>'+fmt(n.d)+' away';
   }
   function onErr(err){ status.style.display='block'; status.textContent='Location unavailable: '+err.message; }
   locateBtn.addEventListener('click', function(){

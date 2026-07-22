@@ -9,7 +9,7 @@
     <desc>Ride start in Casalecchio di Reno. From here the route crosses to Bologna and picks up the Navile canal.</desc>
     <sym>Flag</sym>
   </wpt>
-  <wpt lat="44.5045" lon="11.3478">
+  <wpt lat="44.5047" lon="11.3476">
     <name>Porta Galliera</name>
     <desc>Gateway to the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station.</desc>
     <sym>Waypoint</sym>
@@ -29,7 +29,7 @@
     <desc>The best-preserved lock on the whole canal.</desc>
     <sym>Waypoint</sym>
   </wpt>
-  <wpt lat="44.5242" lon="11.3437">
+  <wpt lat="44.5245" lon="11.343">
     <name>Museo del Patrimonio Industriale</name>
     <desc>Industrial Heritage Museum, via della Beverara 123. Bologna&#x27;s economy from the Modern age onward.</desc>
     <sym>Waypoint</sym>

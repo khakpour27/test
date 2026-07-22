@@ -11,38 +11,40 @@ START = ("Start · Via Don Filippo Ercolani",
          44.4775, 11.2860,
          "Ride start in Casalecchio di Reno. From here the route crosses to Bologna and picks up the Navile canal.")
 
-# --- Route waypoints along the canal (accurate anchors) ---
-# name, lat, lon, description
+# --- Route waypoints along the canal ---
+# Positions are resolved to real OpenStreetMap locations in-browser via `query`;
+# the lat/lon here are only fallbacks used if a lookup fails.
+# name, geocode query, fallback lat, fallback lon, description
 POIS = [
-    ("Porta Galliera", 44.5045, 11.3478,
+    ("Porta Galliera", "Porta Galliera, Bologna, Italy", 44.5047, 11.3476,
      "Gateway to the Ciclovia del Navile, by the Montagnola park near Bologna Centrale station."),
-    ("Sostegno della Bova", 44.5090, 11.3388,
+    ("Sostegno della Bova", "Sostegno della Bova, Bologna, Italy", 44.5090, 11.3388,
      "Historic canal lock just outside Porta Lame, where the Navile canal was born (1221)."),
-    ("Parco di Villa Angeletti", 44.5160, 11.3460,
+    ("Parco di Villa Angeletti", "Parco di Villa Angeletti, Bologna, Italy", 44.5160, 11.3460,
      "Large green park along the right bank of the canal - a good first rest stop."),
-    ("Sostegno del Battiferro", 44.5230, 11.3432,
+    ("Sostegno del Battiferro", "Sostegno del Battiferro, Bologna, Italy", 44.5230, 11.3432,
      "The best-preserved lock on the whole canal."),
-    ("Museo del Patrimonio Industriale", 44.5242, 11.3437,
+    ("Museo del Patrimonio Industriale", "Museo del Patrimonio Industriale, Bologna, Italy", 44.5245, 11.3430,
      "Industrial Heritage Museum, via della Beverara 123. Bologna's economy from the Modern age onward."),
-    ("Sostegno del Torreggiani", 44.5300, 11.3470,
+    ("Sostegno del Torreggiani", "Sostegno Torreggiani, Bologna, Italy", 44.5300, 11.3470,
      "One of the 15th-16th century canal locks along the urban stretch."),
-    ("Sostegno del Landi", 44.5360, 11.3500,
+    ("Sostegno del Landi", "Sostegno Landi, Bologna, Italy", 44.5360, 11.3500,
      "15th-16th century canal lock."),
-    ("Sostegno del Grassi (Vignola)", 44.5420, 11.3530,
+    ("Sostegno del Grassi (Vignola)", "Sostegno del Grassi, Bologna, Italy", 44.5420, 11.3530,
      "Lock rebuilt by the architect Vignola."),
-    ("Ponte della Bionda / Corticella", 44.5488, 11.3552,
+    ("Ponte della Bionda / Corticella", "Ponte della Bionda, Bologna, Italy", 44.5488, 11.3552,
      "Cross the Ponte della Bionda to reach Corticella, site of Bologna's first river port."),
-    ("Ponte di Corticella", 44.5512, 11.3585,
+    ("Ponte di Corticella", "Ponte di Corticella, Bologna, Italy", 44.5512, 11.3585,
      "Bridge documented since the 13th century, dating to 1289."),
-    ("Castel Maggiore", 44.5760, 11.3625,
+    ("Castel Maggiore", "Castel Maggiore, Bologna, Italy", 44.5760, 11.3625,
      "End of the urban stretch; the landscape opens into farmland."),
-    ("San Marino di Bentivoglio - Villa Smeraldi", 44.6265, 11.3480,
+    ("San Marino di Bentivoglio - Villa Smeraldi", "Villa Smeraldi, San Marino di Bentivoglio, Italy", 44.6265, 11.3480,
      "Museo della Civilta Contadina (Museum of Rural Life) inside the majestic Villa Smeraldi."),
-    ("Bentivoglio", 44.6360, 11.3520,
+    ("Bentivoglio", "Bentivoglio, Bologna, Italy", 44.6360, 11.3520,
      "Village on the plain; small detours reach museums and nature areas."),
-    ("Oasi La Rizza", 44.6480, 11.3720,
+    ("Oasi La Rizza", "Oasi La Rizza, Bentivoglio, Italy", 44.6480, 11.3720,
      "Protected natural area, ideal for birdwatching."),
-    ("Malalbergo (end)", 44.7157, 11.5343,
+    ("Malalbergo (end)", "Malalbergo, Bologna, Italy", 44.7157, 11.5343,
      "End of the route on the plain, along natural paths and short road sections - ride with care."),
 ]
 
@@ -111,7 +113,7 @@ gpx += ['  <metadata>',
         '    <desc>Casalecchio di Reno to Malalbergo via Bologna and the Navile canal.</desc>',
         '  </metadata>']
 gpx += wpt(START[0], START[2], START[3], START[4], "Flag")
-for name, lat, lon, desc in POIS:
+for name, q, lat, lon, desc in POIS:
     gpx += wpt(name, lat, lon, desc, "Waypoint")
 for name, q, lat, lon, desc in ATTRACTIONS:
     gpx += wpt(name, lat, lon, desc, "Tourist Info")
@@ -125,7 +127,7 @@ with open(os.path.join(OUT, "navile.gpx"), "w") as f:
 # --- Write data.js for the web app ---
 data = {
     "start": {"name": START[0], "query": START[1], "lat": START[2], "lon": START[3], "desc": START[4]},
-    "pois": [{"name": n, "lat": la, "lon": lo, "desc": d} for (n, la, lo, d) in POIS],
+    "pois": [{"name": n, "query": q, "lat": la, "lon": lo, "desc": d} for (n, q, la, lo, d) in POIS],
     "attractions": [{"name": n, "query": q, "lat": la, "lon": lo, "desc": d}
                     for (n, q, la, lo, d) in ATTRACTIONS],
     "track": [[la, lo] for (la, lo) in TRACK],

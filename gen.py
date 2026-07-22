@@ -2,7 +2,7 @@
 """Generate navile.gpx and route data (data.js) from a single source of truth."""
 import json, html, os
 
-OUT = os.environ.get("OUT_DIR", ".")
+OUT = os.environ.get("OUT_DIR", "docs")
 
 # --- Points of interest (accurate anchor waypoints) ---
 # name, lat, lon, description

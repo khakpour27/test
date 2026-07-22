@@ -15,8 +15,9 @@ Open **`index.html`** — hosted on GitHub Pages it becomes a live map you can u
 - A readout of the nearest point of interest and how far away it is
 - A **↓ GPX** button and per-point "Directions to here" links
 
-To publish it: in this repo go to **Settings → Pages**, set the source to the branch and
-`/ (root)` folder. Your app will be live at `https://<username>.github.io/<repo>/`.
+The site lives in **`docs/`**. To publish it: go to **Settings → Pages**, set
+**Source: Deploy from a branch**, **Branch: `main` / `docs`**, and Save. Your app goes live at
+**https://khakpour27.github.io/test/** within a minute or two.
 (GPS requires HTTPS, which GitHub Pages provides automatically.)
 
 ### 2. The GPX file (any navigation app)
@@ -63,5 +64,5 @@ Both files are generated from one source of truth. Edit the `POIS` / `TRACK` lis
 `gen.py` and regenerate:
 
 ```bash
-python3 gen.py    # rewrites navile.gpx and data.js
+python3 gen.py    # rewrites docs/navile.gpx and docs/data.js
 ```

@@ -20,8 +20,8 @@
   }
   .bar h1 { font-size:15px; margin:0; font-weight:600; flex:1; line-height:1.2; }
   .bar small { display:block; font-weight:400; opacity:.85; font-size:11px; }
-  .bar a { color:#fff; text-decoration:none; background:rgba(255,255,255,.18);
-    padding:6px 10px; border-radius:8px; font-size:12px; white-space:nowrap; }
+  .bar button.gpx { color:#fff; background:rgba(255,255,255,.18); border:none;
+    padding:7px 11px; border-radius:8px; font-size:12px; white-space:nowrap; cursor:pointer; font-family:inherit; }
   .fab {
     position:absolute; z-index:1000; right:14px; bottom:26px;
     width:56px; height:56px; border-radius:50%; border:none;
@@ -36,6 +36,15 @@
     border-radius:10px; font-size:13px; max-width:60%;
     box-shadow:0 1px 6px rgba(0,0,0,.25); display:none;
   }
+  #banner {
+    position:absolute; z-index:1000; left:50%; transform:translateX(-50%);
+    top:60px; background:rgba(20,20,20,.86); color:#fff; padding:7px 13px;
+    border-radius:20px; font-size:12.5px; display:none; align-items:center; gap:8px;
+    box-shadow:0 2px 10px rgba(0,0,0,.3); max-width:90%;
+  }
+  #banner .spin { width:13px; height:13px; border:2px solid rgba(255,255,255,.35);
+    border-top-color:#fff; border-radius:50%; animation:sp .8s linear infinite; flex:none; }
+  @keyframes sp { to { transform:rotate(360deg); } }
   .me-dot {
     width:18px; height:18px; background:#1c7ed6; border:3px solid #fff;
     border-radius:50%; box-shadow:0 0 0 2px rgba(28,126,214,.4);
@@ -50,9 +59,10 @@
 <body>
 <div class="bar">
   <h1>Ciclovia del Navile<small>Bologna &rarr; Malalbergo &middot; ~30 km &middot; mostly flat</small></h1>
-  <a href="navile.gpx" download>&#8681; GPX</a>
+  <button class="gpx" id="gpx">&#8681; GPX</button>
 </div>
 <div id="map"></div>
+<div id="banner"></div>
 <div id="status"></div>
 <button class="fab" id="locate" title="Show my location">&#9678;</button>
 
@@ -68,8 +78,17 @@
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Route line
-  var line = L.polyline(D.track, { color:'#0b7285', weight:5, opacity:.85 }).addTo(map);
+  var banner = document.getElementById('banner');
+  function showBanner(html, spinning) {
+    banner.style.display = 'flex';
+    banner.innerHTML = (spinning ? '<span class="spin"></span>' : '') + '<span>' + html + '</span>';
+  }
+  function hideBanner() { banner.style.display = 'none'; }
+
+  // Approximate line drawn immediately as a fallback; replaced by the real
+  // path-following route once the routing service responds.
+  var routeCoords = D.track.slice();          // [ [lat,lon], ... ]
+  var line = L.polyline(routeCoords, { color:'#0b7285', weight:5, opacity:.5, dashArray:'6 8' }).addTo(map);
   map.fitBounds(line.getBounds(), { padding:[30,30] });
 
   // POI markers
@@ -85,14 +104,74 @@
       p.lat + ',' + p.lon + '&travelmode=bicycling" target="_blank" rel="noopener">Directions to here &rarr;</a>');
   });
 
-  // --- Live location ---
+  // ---- Snap the route to real cycleways/towpaths via BRouter ----
+  // We route through the canal corridor (a downsampled set of anchor points)
+  // so the result hugs the Navile towpath and follows mapped paths.
+  function vias() {
+    var t = D.track, out = [];
+    for (var i = 0; i < t.length; i += 2) out.push(t[i]);
+    if (out[out.length-1] !== t[t.length-1]) out.push(t[t.length-1]);
+    return out;
+  }
+  function brouterURL(profile) {
+    var ll = vias().map(function(p){ return p[1] + ',' + p[0]; }).join('|'); // lon,lat
+    return 'https://brouter.de/brouter?lonlats=' + ll +
+           '&profile=' + profile + '&alternativeidx=0&format=geojson';
+  }
+  function applyRoute(coords) {  // coords: [ [lat,lon], ... ]
+    routeCoords = coords;
+    line.setLatLngs(coords);
+    line.setStyle({ opacity:.9, dashArray:null, weight:5 });
+    map.fitBounds(line.getBounds(), { padding:[30,30] });
+  }
+  function tryProfile(profiles, i) {
+    if (i >= profiles.length) {
+      showBanner('Showing an approximate line – routing service unreachable. The GPX still works in OsmAnd/Komoot.', false);
+      setTimeout(hideBanner, 7000);
+      return;
+    }
+    fetch(brouterURL(profiles[i]))
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(gj){
+        var f = gj.features && gj.features[0];
+        var c = f && f.geometry && f.geometry.coordinates;
+        if (!c || !c.length) throw new Error('empty');
+        applyRoute(c.map(function(p){ return [p[1], p[0]]; }));  // lon,lat -> lat,lon
+        var km = f.properties && f.properties['track-length'] ? (f.properties['track-length']/1000).toFixed(1) : null;
+        showBanner('Route snapped to real bike paths' + (km ? ' · ' + km + ' km' : ''), false);
+        setTimeout(hideBanner, 4000);
+      })
+      .catch(function(){ tryProfile(profiles, i+1); });
+  }
+  showBanner('Finding the real bike route along the canal…', true);
+  tryProfile(['trekking','gravel','fastbike'], 0);
+
+  // ---- GPX export (uses the routed geometry when available) ----
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function buildGPX() {
+    var g = '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Ciclovia del Navile" xmlns="http://www.topografix.com/GPX/1/1">\n';
+    g += '<metadata><name>Ciclovia del Navile</name></metadata>\n';
+    D.pois.forEach(function(p){ g += '<wpt lat="'+p.lat+'" lon="'+p.lon+'"><name>'+esc(p.name)+'</name><desc>'+esc(p.desc)+'</desc></wpt>\n'; });
+    g += '<trk><name>Ciclovia del Navile</name><trkseg>\n';
+    routeCoords.forEach(function(c){ g += '<trkpt lat="'+c[0]+'" lon="'+c[1]+'"></trkpt>\n'; });
+    g += '</trkseg></trk>\n</gpx>\n';
+    return g;
+  }
+  document.getElementById('gpx').addEventListener('click', function(){
+    var blob = new Blob([buildGPX()], { type:'application/gpx+xml' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'navile.gpx';
+    document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  // ---- Live location ----
   var meDot = null, meAcc = null, following = false, watchId = null;
   var status = document.getElementById('status');
   var locateBtn = document.getElementById('locate');
   var meIcon = L.divIcon({ className:'', html:'<div class="me-dot"></div>', iconSize:[18,18] });
 
   function toRad(x){ return x*Math.PI/180; }
-  function distM(a,b){ // haversine metres
+  function distM(a,b){
     var R=6371000, dLat=toRad(b[0]-a[0]), dLon=toRad(b[1]-a[1]);
     var s=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLon/2)*Math.sin(dLon/2);
     return 2*R*Math.asin(Math.sqrt(s));
@@ -129,7 +208,6 @@
     locateBtn.innerHTML = following ? '&#10148;' : '&#9678;';
     if(following && meDot) map.setView(meDot.getLatLng(), Math.max(map.getZoom(),16));
   });
-  // stop auto-following when user drags the map
   map.on('dragstart', function(){ if(following){ following=false; locateBtn.classList.remove('follow'); locateBtn.innerHTML='&#9678;'; }});
 })();
 </script>

@@ -49,11 +49,15 @@ The file contains named **waypoints** for each point of interest plus a **track*
 
 ## A note on accuracy
 
-The **waypoints** are placed on the real locations. The **track line** follows the canal's
-course and is precise through the Bologna urban section; the rural
-Bentivoglio → Malalbergo stretch is *indicative*. For exact turn-by-turn, import the GPX into
-OsmAnd/Komoot and let it snap the route to mapped paths, or re-trace it in
-[BRouter](https://brouter.de/brouter-web/) with the "trekking" bike profile.
+The **waypoints** sit on the real locations. For the route line, the **map app snaps to real
+bike paths**: when `index.html` loads in your browser it asks the [BRouter](https://brouter.de)
+cycling engine to route through the canal corridor, so the line follows mapped cycleways and
+towpaths — and the in-app **↓ GPX** button exports that snapped track. If the routing service
+can't be reached, the app falls back to an approximate dashed line and says so.
+
+The standalone **`docs/navile.gpx`** file (the direct download link) is the *approximate* version
+baked at build time — fine as an overview, but for exact turn-by-turn use the app's GPX export,
+or import any GPX into OsmAnd/Komoot and let it re-route along mapped paths.
 
 The official route is not signposted — carry a map/GPS, watch for limited water sources,
 and check the weather before you go.

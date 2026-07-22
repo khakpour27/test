@@ -33,8 +33,11 @@
     display:flex; align-items:center; justify-content:center;
   }
   .fab.follow { background:#e8590c; }
-  .fab.mini { width:46px; height:46px; font-size:20px; bottom:90px; right:19px; background:#495057; }
+  .fab.mini { width:46px; height:46px; font-size:20px; right:19px; background:#495057; }
   .fab.mini.on { background:#2b8a3e; }
+  #voice { bottom:90px; }
+  #basemap { bottom:146px; background:#1c3d5a; }
+  #basemap.on { background:#2b8a3e; }
   #status {
     position:absolute; z-index:1000; left:14px; bottom:30px;
     background:rgba(255,255,255,.94); color:#222; padding:8px 12px;
@@ -105,6 +108,7 @@
   <div id="elevChart">Loading…</div>
 </div>
 <div id="status"></div>
+<button class="fab mini" id="basemap" title="Switch to satellite view">&#128752;</button>
 <button class="fab mini" id="voice" title="Voice guidance">&#128264;</button>
 <button class="fab" id="locate" title="Start / follow my location">&#9678;</button>
 
@@ -120,7 +124,17 @@
   var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom:19, attribution:'Imagery &copy; Esri, Maxar, Earthstar Geographics' });
   var labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19 });
-  L.control.layers({ 'Map':osm, 'Satellite':L.layerGroup([sat,labels]) }, null, { position:'topright', collapsed:false }).addTo(map);
+  var satLayer = L.layerGroup([sat, labels]);
+  var satOn = false;
+  var baseBtn = document.getElementById('basemap');
+  baseBtn.addEventListener('click', function(){
+    satOn = !satOn;
+    if(satOn){ map.removeLayer(osm); satLayer.addTo(map); }
+    else { map.removeLayer(satLayer); osm.addTo(map); }
+    baseBtn.classList.toggle('on', satOn);
+    baseBtn.innerHTML = satOn ? '&#128506;' : '&#128752;'; // map vs satellite
+    baseBtn.title = satOn ? 'Switch to map view' : 'Switch to satellite view';
+  });
 
   var banner = document.getElementById('banner');
   function showBanner(html, spin){ banner.style.display='flex'; banner.innerHTML=(spin?'<span class="spin"></span>':'')+'<span>'+html+'</span>'; }
@@ -436,7 +450,7 @@
   function updateNav(pos, acc){
     if(!routeCoords.length||!cum.length){ return; }
     var v=nearestVertex(pos), travelled=cum[v.i], remaining=Math.max(0, totalLen-travelled);
-    nav.classList.add('show'); setControlsTop(118);
+    nav.classList.add('show'); setControlsTop(132);
     if(v.d>70){ // off the route
       nextTurnDist=null;
       nav.classList.add('off'); navIcon.innerHTML='&#9888;';
@@ -464,7 +478,7 @@
     updateNav(ll, e.coords.accuracy);
     if(following) map.setView(ll, navZoom(), {animate:true});
   }
-  function onErr(err){ nav.classList.add('show'); setControlsTop(118); navIcon.innerHTML='&#9888;';
+  function onErr(err){ nav.classList.add('show'); setControlsTop(132); navIcon.innerHTML='&#9888;';
     navDist.textContent='GPS'; navInstr.textContent='Location unavailable'; navSub.textContent=err.message; }
   function startWatch(){ if(!('geolocation' in navigator)){ onErr({message:'Geolocation not supported on this device.'}); return; }
     if(watchId===null) watchId=navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:2000,timeout:20000});

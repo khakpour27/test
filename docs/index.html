@@ -109,6 +109,8 @@
   <div class="row" data-k="gelato"><span class="em">&#127846;</span><span class="nm">Gelato</span><span class="ct" id="ctGelato">&ndash;</span></div>
   <div class="row" data-k="water"><span class="em">&#128688;</span><span class="nm">Water taps</span><span class="ct" id="ctWater">&ndash;</span></div>
   <div class="row" data-k="toilet"><span class="em">&#128702;</span><span class="nm">Toilets</span><span class="ct" id="ctToilet">&ndash;</span></div>
+  <div class="row" data-k="food"><span class="em">&#9749;</span><span class="nm">Caf&eacute; / bar</span><span class="ct" id="ctFood">&ndash;</span></div>
+  <div class="row" data-k="bike"><span class="em">&#128295;</span><span class="nm">Bike shop / repair</span><span class="ct" id="ctBike">&ndash;</span></div>
   <div class="hint" id="amenHint">Tap a type to show it along the route</div>
 </div>
 <div id="map"></div>
@@ -275,7 +277,7 @@
   }
   function applyRoute(coords){ routeCoords=coords; line.setLatLngs(coords);
     line.setStyle({ opacity:.9, dashArray:null, weight:5 }); map.fitBounds(line.getBounds(),{padding:[36,36]});
-    computeMeta(); updateStops(); buildElevation(coords); }
+    computeMeta(); updateStops(); buildElevation(coords); fetchAmenities(); }
 
   // ---- Elevation profile (Open-Meteo, sampled along the route) ----
   var elevData=null;
@@ -316,13 +318,24 @@
   document.getElementById('elevClose').addEventListener('click', function(){ document.getElementById('elev').classList.remove('show'); });
 
   // ---- Amenities along the route (gelato, water taps, toilets) from OpenStreetMap ----
-  var amenLayers={ gelato:L.layerGroup(), water:L.layerGroup(), toilet:L.layerGroup() };
-  var amenOn={ gelato:false, water:false, toilet:false };
+  var amenKeys=['gelato','water','toilet','food','bike'];
+  var amenLayers={}, amenPts={}, amenOn={};
+  amenKeys.forEach(function(k){ amenLayers[k]=L.layerGroup(); amenPts[k]=[]; amenOn[k]=false; });
   var amenLoaded=false, amenLoading=false;
-  var amenEmoji={ gelato:'🍦', water:'🚰', toilet:'🚻' };
-  var amenName={ gelato:'Gelato', water:'Water tap', toilet:'Toilet' };
+  var amenEmoji={ gelato:'🍦', water:'🚰', toilet:'🚻', food:'☕', bike:'🔧' };
+  var amenName={ gelato:'Gelato', water:'Water tap', toilet:'Toilet', food:'Café / bar', bike:'Bike shop' };
+  var amenCt={ gelato:'ctGelato', water:'ctWater', toilet:'ctToilet', food:'ctFood', bike:'ctBike' };
   function amenIcon(k){ return L.divIcon({ className:'', iconSize:[25,25], html:'<div class="amen-pin">'+amenEmoji[k]+'</div>' }); }
   function setHint(t){ document.getElementById('amenHint').textContent=t; }
+  function classifyAmenity(t){
+    var a=t.amenity;
+    if(a==='drinking_water'||a==='fountain') return 'water';
+    if(a==='toilets') return 'toilet';
+    if(a==='ice_cream'||t.shop==='ice_cream') return 'gelato';
+    if(a==='cafe'||a==='bar'||a==='pub'||a==='restaurant') return 'food';
+    if(t.shop==='bicycle'||a==='bicycle_repair_station') return 'bike';
+    return null;
+  }
   function fetchAmenities(){
     if(amenLoaded) return Promise.resolve();
     if(amenLoading) return amenLoading;
@@ -330,37 +343,39 @@
     var pts=downsample(routeCoords,60);
     var around=pts.map(function(p){ return p[0].toFixed(5)+','+p[1].toFixed(5); }).join(',');
     var q='[out:json][timeout:30];('
-      +'nwr["amenity"="drinking_water"](around:200,'+around+');'
-      +'nwr["amenity"="fountain"]["drinking_water"="yes"](around:200,'+around+');'
-      +'nwr["amenity"="toilets"](around:200,'+around+');'
-      +'nwr["amenity"="ice_cream"](around:300,'+around+');'
-      +'nwr["shop"="ice_cream"](around:300,'+around+');'
-      +');out center 250;';
+      +'nwr["amenity"="drinking_water"](around:400,'+around+');'
+      +'nwr["amenity"="fountain"]["drinking_water"="yes"](around:400,'+around+');'
+      +'nwr["amenity"="toilets"](around:400,'+around+');'
+      +'nwr["amenity"="ice_cream"](around:400,'+around+');'
+      +'nwr["shop"="ice_cream"](around:400,'+around+');'
+      +'nwr["amenity"~"^(cafe|bar|pub|restaurant)$"](around:400,'+around+');'
+      +'nwr["shop"="bicycle"](around:500,'+around+');'
+      +'nwr["amenity"="bicycle_repair_station"](around:500,'+around+');'
+      +');out center 400;';
     amenLoading = fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q))
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(j){
         amenLoading=false;
         if(!j||!j.elements){ setHint('Could not load amenities (network).'); return; }
-        var counts={gelato:0,water:0,toilet:0};
+        var counts={gelato:0,water:0,toilet:0,food:0,bike:0};
         j.elements.forEach(function(e){
           var t=e.tags||{}, lat=(e.lat!=null?e.lat:(e.center&&e.center.lat)), lon=(e.lon!=null?e.lon:(e.center&&e.center.lon));
           if(lat==null||lon==null) return;
-          var k = (t.amenity==='drinking_water'||t.amenity==='fountain') ? 'water'
-                : (t.amenity==='toilets') ? 'toilet'
-                : (t.amenity==='ice_cream'||t.shop==='ice_cream') ? 'gelato' : null;
-          if(!k) return; counts[k]++;
+          var k=classifyAmenity(t); if(!k) return; counts[k]++;
+          amenPts[k].push([lat,lon]);
           var nm=t.name||amenName[k];
           amenLayers[k].addLayer(L.marker([lat,lon],{icon:amenIcon(k)})
             .bindPopup('<b>'+amenEmoji[k]+' '+esc(nm)+'</b><br>'+popupLink(lat,lon)));
         });
         amenLoaded=true;
-        document.getElementById('ctGelato').textContent=counts.gelato;
-        document.getElementById('ctWater').textContent=counts.water;
-        document.getElementById('ctToilet').textContent=counts.toilet;
-        setHint('Within ~200 m of the route');
+        amenKeys.forEach(function(k){ document.getElementById(amenCt[k]).textContent=counts[k]; });
+        setHint('Within ~400 m of the route');
       }).catch(function(){ amenLoading=false; setHint('Could not load amenities (network).'); });
     return amenLoading;
   }
+  function nearestAmen(pos,k){ var pts=amenPts[k], bd=Infinity;
+    for(var i=0;i<pts.length;i++){ var d=distM(pos,pts[i]); if(d<bd) bd=d; }
+    return pts.length?bd:null; }
   Array.prototype.forEach.call(document.querySelectorAll('#amen .row'), function(row){
     row.addEventListener('click', function(){
       var k=row.getAttribute('data-k');
@@ -543,7 +558,11 @@
     navIcon.innerHTML=nm.icon; navDist.textContent=fmt(dNext); navInstr.innerHTML=nm.text;
     var ns=null; for(var s=0;s<stopProj.length;s++){ if(stopProj[s].cum>travelled+40){ ns=stopProj[s]; break; } }
     var eta=Math.round(remaining/1000/SPEED_KMH*60);
-    navSub.textContent=fmt(remaining)+' left · ~'+eta+' min'+(ns?' · next: '+ns.name:'');
+    var sub=fmt(remaining)+' left · ~'+eta+' min'+(ns?' · next: '+ns.name:'');
+    if(amenLoaded){ var w=nearestAmen(pos,'water'), tl=nearestAmen(pos,'toilet');
+      if(w!=null && w<3000) sub+=' · 🚰 '+fmt(w);
+      if(tl!=null && tl<3000) sub+=' · 🚻 '+fmt(tl); }
+    navSub.textContent=sub;
     if(voiceOn && nmIdx>=0){
       if(dNext<=170 && dNext>55 && !preSpoken.has(nmIdx)){ preSpoken.add(nmIdx); speak('In '+(Math.round(dNext/10)*10)+' meters, '+nm.text); }
       if(dNext<=45 && !finSpoken.has(nmIdx)){ finSpoken.add(nmIdx); speak(nm.text); }

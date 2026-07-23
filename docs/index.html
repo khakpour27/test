@@ -93,6 +93,8 @@
   #amen .row .em { font-size:18px; width:22px; text-align:center; }
   #amen .row .nm { flex:1; }
   #amen .row .ct { font-size:12px; color:#888; font-variant-numeric:tabular-nums; }
+  #amen .amenact { width:calc(100% - 8px); margin:4px; border:none; background:var(--accent); color:#fff;
+    padding:9px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; }
   #amen .hint { font-size:11px; color:#999; padding:4px 10px 6px; }
   .amen-pin { font-size:15px; line-height:23px; width:25px; height:25px; text-align:center;
     background:#fff; border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,.4); }
@@ -111,6 +113,7 @@
   <div class="row" data-k="toilet"><span class="em">&#128702;</span><span class="nm">Toilets</span><span class="ct" id="ctToilet">&ndash;</span></div>
   <div class="row" data-k="food"><span class="em">&#9749;</span><span class="nm">Caf&eacute; / bar</span><span class="ct" id="ctFood">&ndash;</span></div>
   <div class="row" data-k="bike"><span class="em">&#128295;</span><span class="nm">Bike shop / repair</span><span class="ct" id="ctBike">&ndash;</span></div>
+  <button class="amenact" id="amenWater">&#10132; Navigate to nearest water tap</button>
   <div class="hint" id="amenHint">Tap a type to show it along the route</div>
 </div>
 <div id="map"></div>
@@ -389,6 +392,21 @@
     var el=document.getElementById('amen'); el.classList.toggle('show');
     if(el.classList.contains('show')) fetchAmenities();
   });
+  document.getElementById('amenWater').addEventListener('click', function(){
+    setHint('Finding the nearest water tap…');
+    fetchAmenities().then(function(){
+      var origin = meDot ? [meDot.getLatLng().lat, meDot.getLatLng().lng] : [map.getCenter().lat, map.getCenter().lng];
+      var pts=amenPts.water; if(!pts.length){ setHint('No water taps mapped near the route.'); return; }
+      var best=null,bd=Infinity; pts.forEach(function(p){ var d=distM(origin,p); if(d<bd){ bd=d; best=p; } });
+      if(!amenOn.water){ amenOn.water=true; amenLayers.water.addTo(map);
+        var r=document.querySelector('#amen .row[data-k="water"]'); if(r) r.classList.add('on'); }
+      document.getElementById('amen').classList.remove('show');
+      map.setView(best, Math.max(map.getZoom(),16), {animate:true});
+      var url='https://www.google.com/maps/dir/?api=1&origin='+origin[0]+','+origin[1]+'&destination='+best[0]+','+best[1]+'&travelmode=bicycling';
+      showBanner('🚰 Nearest water tap · '+fmt(bd)+' away — <a href="'+url+'" target="_blank" rel="noopener" style="color:#7fd4ff;font-weight:700">Navigate ↗</a>', false);
+      setTimeout(hideBanner, 12000);
+    });
+  });
   map.on('click', function(){ document.getElementById('amen').classList.remove('show'); });
 
   // ---- OSRM cycling router (returns turn steps WITH street names) ----
@@ -559,9 +577,11 @@
     var ns=null; for(var s=0;s<stopProj.length;s++){ if(stopProj[s].cum>travelled+40){ ns=stopProj[s]; break; } }
     var eta=Math.round(remaining/1000/SPEED_KMH*60);
     var sub=fmt(remaining)+' left · ~'+eta+' min'+(ns?' · next: '+ns.name:'');
-    if(amenLoaded){ var w=nearestAmen(pos,'water'), tl=nearestAmen(pos,'toilet');
+    if(amenLoaded){ var w=nearestAmen(pos,'water'), tl=nearestAmen(pos,'toilet'), cf=nearestAmen(pos,'food'), bk=nearestAmen(pos,'bike');
       if(w!=null && w<3000) sub+=' · 🚰 '+fmt(w);
-      if(tl!=null && tl<3000) sub+=' · 🚻 '+fmt(tl); }
+      if(tl!=null && tl<3000) sub+=' · 🚻 '+fmt(tl);
+      if(cf!=null && cf<800) sub+=' · ☕ '+fmt(cf);
+      if(bk!=null && bk<1200) sub+=' · 🔧 '+fmt(bk); }
     navSub.textContent=sub;
     if(voiceOn && nmIdx>=0){
       if(dNext<=170 && dNext>55 && !preSpoken.has(nmIdx)){ preSpoken.add(nmIdx); speak('In '+(Math.round(dNext/10)*10)+' meters, '+nm.text); }

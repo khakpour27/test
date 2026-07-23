@@ -231,8 +231,10 @@
   // ---- Real canal geometry from OpenStreetMap (Overpass) ----
   function fetchCanal(){
     var q = '[out:json][timeout:25];way["waterway"="canal"]["name"~"Navile"](44.44,11.25,44.75,11.56);out geom;';
-    var url = 'https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q);
-    return fetch(url).then(function(r){ return r.ok?r.json():null; })
+    return fetch('https://overpass-api.de/api/interpreter', {
+        method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+        body:'data='+encodeURIComponent(q) })
+      .then(function(r){ return r.ok?r.json():null; })
       .then(function(j){
         if(!j||!j.elements) return null;
         var segs = j.elements.filter(function(e){ return e.geometry&&e.geometry.length>1; })
@@ -343,7 +345,7 @@
     if(amenLoaded) return Promise.resolve();
     if(amenLoading) return amenLoading;
     setHint('Searching OpenStreetMap…');
-    var pts=downsample(routeCoords,60);
+    var pts=downsample(routeCoords,50);
     var around=pts.map(function(p){ return p[0].toFixed(5)+','+p[1].toFixed(5); }).join(',');
     var q='[out:json][timeout:30];('
       +'nwr["amenity"="drinking_water"](around:400,'+around+');'
@@ -355,7 +357,10 @@
       +'nwr["shop"="bicycle"](around:500,'+around+');'
       +'nwr["amenity"="bicycle_repair_station"](around:500,'+around+');'
       +');out center 400;';
-    amenLoading = fetch('https://overpass-api.de/api/interpreter?data='+encodeURIComponent(q))
+    // POST (not GET) so the long "around" query can't blow the URL length limit (HTTP 414).
+    amenLoading = fetch('https://overpass-api.de/api/interpreter', {
+        method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+        body:'data='+encodeURIComponent(q) })
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(j){
         amenLoading=false;

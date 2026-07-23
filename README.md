@@ -22,6 +22,8 @@ Open **`index.html`** — hosted on GitHub Pages it becomes a live map you can u
 - **Voice guidance** — tap the 🔈 button to hear each turn announced (~150 m ahead and at the turn)
 - **Auto-zoom** that tightens as you approach a turn, **keep-screen-awake** while navigating, and an
   **elevation profile** (⛰ button) with total ascent/descent, fetched in-browser from Open-Meteo
+- **Amenities along the route** (🍦 button) — toggle **gelato 🍦, water taps 🚰 and toilets 🚻**,
+  found within ~200 m of the path from live OpenStreetMap data, each with a count and directions link
 - A **↓ GPX** button and per-point "Directions to here" links
 
 The site lives in **`docs/`**. To publish it: go to **Settings → Pages**, set
